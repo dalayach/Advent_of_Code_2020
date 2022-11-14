@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -30,80 +33,80 @@ public class AOC_2020
    private void day10_2()
    {
    
-      enum State { OPTIONAL, DEPENDENT, REQUIRED, ; };
-   
-      record Pair(long value, State state) {};
-   
-      record Group(
-         Pair left4, 
-         Pair left3, 
-         Pair left2, 
-         Pair left1, 
-         Pair center// , 
-         // long right1, 
-         // long right2,  
-         // long right3, 
-         // long right4
-      )
-      {
-      
-         Group(Map<Long, State> stateMap, int i)
-         {
-         
-            this(
-                  stateMap.,
-                  list.get(i - 3),
-                  list.get(i - 2),
-                  list.get(i - 1), 
-                  list.get(i)// , 
-               //    list.get(i + 1), 
-               //    list.get(i + 2), 
-               //    list.get(i + 3), 
-               //    list.get(i + 4)
-               );
-         
-         }
-         
-         State fetchCenterState()
-         {
-         
-            if (center - left1 == 3 || right1 - center == 3 || right1 - left1 > 3)
-            {
-            
-               return State.REQUIRED;
-            
-            }
-            
-            else if (left3 == 0 && (left))
-            
-               return null;
-         
-         }
-      
-      };
-   
-      List<Long> lines = 
-         //LongStream.of(1, 2, 3, 5, 7, 10)
-         //LongStream.of(28, 33, 18, 42, 31, 14, 46, 20, 48, 47, 24, 23, 49, 45, 19, 38, 39, 11, 1, 32, 25, 35, 8, 17, 7, 9, 4, 2, 34, 10, 3)
+      final List<Long> lines = 
          fetchLines("day10.txt")
             .mapToLong(Long::parseLong)
             .sorted()
             .boxed()
             .toList()
             ;
-   
-      Map<Long, State> stateMap = new HashMap<>();
       
-      lines.stream()
-         .forEach(each -> stateMap.put(each, null))
-         ;
+      final long maxValue = 
+         lines
+            .stream()
+            .mapToLong(Long::longValue)
+            .max()
+            .orElseThrow()
+            ;
+      
+      final Set<Set<Long>> chains = new HashSet<>();
+      
+      this.day10_2_recursive(chains, lines, 0, Set.of(), maxValue);
+      
+      System.out.println(chains.size());
    
-      for (long each : lines)
+   }
+   
+   private void day10_2_recursive(final Set<Set<Long>> chains, final List<Long> lines, final int index, final Set<Long> currentSet, final long goalValue)
+   {
+   
+      final long currentValue = lines.get(index);
+      
+      if (currentValue == goalValue)
       {
       
-         Group group = new Group(stateMap, each);
+         chains.add(currentSet);
          
+         final long wow = chains.size();
+         
+         if (wow % 10000 == 0)
+         {
+         
+            System.out.println(wow);
+         
+         }
+         
+         return;
+      
       }
+      
+      final List<CompletableFuture<Void>> futures = new ArrayList<>();
+   
+      nextCheckLoop:
+      for (int i = index + 1; i <= index + 3 && i < lines.size(); i++)
+      {
+      
+         final long newValue = lines.get(i);
+         final int copy = i;
+      
+         if ((newValue - currentValue) <= 3)
+         {
+         
+            final Set<Long> newSet = new HashSet<>();
+            newSet.addAll(currentSet);
+            newSet.add(newValue);
+         
+            futures.add(CompletableFuture.runAsync(() -> this.day10_2_recursive(chains, lines, copy, Set.copyOf(newSet), goalValue)));
+         
+         }
+      
+      }
+      
+      futures
+         .stream()
+         .map(CompletableFuture::join)
+         .toList()
+         ;
    
    }
    
@@ -192,7 +195,7 @@ public class AOC_2020
       {
       
          return
-            Files.lines(Path.of("../input_files", fileName))
+            Files.lines(Path.of("..", "input_files", fileName))
                ;
             
       }
