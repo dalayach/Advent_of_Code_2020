@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -34,80 +33,46 @@ public class AOC_2020
    {
    
       final List<Long> lines = 
-         fetchLines("day10.txt")
+         Stream
+            .concat
+            (
+               this.fetchLines("day10.txt"),
+               Stream.of("0")  
+            )
             .mapToLong(Long::parseLong)
             .sorted()
             .boxed()
             .toList()
             ;
       
-      final long maxValue = 
-         lines
-            .stream()
-            .mapToLong(Long::longValue)
-            .max()
-            .orElseThrow()
-            ;
+      final Map<Integer, Long> pathsPerIndex = new HashMap<>();
       
-      final Set<Set<Long>> chains = new HashSet<>();
-      
-      this.day10_2_recursive(chains, lines, 0, Set.of(), maxValue);
-      
-      System.out.println(chains.size());
-   
-   }
-   
-   private void day10_2_recursive(final Set<Set<Long>> chains, final List<Long> lines, final int index, final Set<Long> currentSet, final long goalValue)
-   {
-   
-      final long currentValue = lines.get(index);
-      
-      if (currentValue == goalValue)
+      for (int i = lines.size() - 1; i >= 0; i--)
       {
       
-         chains.add(currentSet);
-         
-         final long wow = chains.size();
-         
-         if (wow % 10000 == 0)
+         long count = 0;
+      
+         for (int j = i + 1; j < lines.size() && j <= i + 3; j++)
          {
          
-            System.out.println(wow);
+            final long start = lines.get(i);
+            final long next  = lines.get(j);
+         
+            if ((next - start) <= 3 && pathsPerIndex.containsKey(j))
+            {
+               
+               count += pathsPerIndex.get(j);
+               
+            }
          
          }
          
-         return;
+         pathsPerIndex.put(i, (count == 0 ? 1 : count));
       
       }
       
-      final List<CompletableFuture<Void>> futures = new ArrayList<>();
-   
-      nextCheckLoop:
-      for (int i = index + 1; i <= index + 3 && i < lines.size(); i++)
-      {
+      System.out.println(pathsPerIndex);
       
-         final long newValue = lines.get(i);
-         final int copy = i;
-      
-         if ((newValue - currentValue) <= 3)
-         {
-         
-            final Set<Long> newSet = new HashSet<>();
-            newSet.addAll(currentSet);
-            newSet.add(newValue);
-         
-            futures.add(CompletableFuture.runAsync(() -> this.day10_2_recursive(chains, lines, copy, Set.copyOf(newSet), goalValue)));
-         
-         }
-      
-      }
-      
-      futures
-         .stream()
-         .map(CompletableFuture::join)
-         .toList()
-         ;
-   
    }
    
    /** Day 10 - part 1 */
@@ -116,12 +81,13 @@ public class AOC_2020
    
       List<Long> lines = 
          //LongStream.of(28, 33, 18, 42, 31, 14, 46, 20, 48, 47, 24, 23, 49, 45, 19, 38, 39, 11, 1, 32, 25, 35, 8, 17, 7, 9, 4, 2, 34, 10, 3)
-         fetchLines("day10.txt")
-            .mapToLong(Long::parseLong)
-            .sorted()
-            .boxed()
-            .toList()
-            ;
+         this.
+            fetchLines("day10.txt")
+               .mapToLong(Long::parseLong)
+               .sorted()
+               .boxed()
+               .toList()
+               ;
    
       Map<Integer, List<Long>> histogram = 
          Map.ofEntries(
@@ -188,7 +154,7 @@ public class AOC_2020
     * @throw               If file cannot be found, or for other IO errors.
     * 
     */
-   private static Stream<String> fetchLines(String fileName)
+   private Stream<String> fetchLines(String fileName)
    {
    
       try
