@@ -107,7 +107,7 @@ public sealed abstract class AOC_2020
    public static void main(String[] args)
    {
    
-      new Day12().part1();
+      new Day12().part2();
    
    }
 
@@ -117,16 +117,16 @@ public sealed abstract class AOC_2020
       private enum Direction
       {
       
-         NORTH, 
-         SOUTH, 
-         EAST, 
-         WEST, 
-         ; 
+         NORTH,
+         SOUTH,
+         EAST,
+         WEST,
+         ;
       
          public Direction turnLeft()
          {
          
-            return 
+            return
                switch (this)
                {
                
@@ -142,7 +142,7 @@ public sealed abstract class AOC_2020
          public Direction turnRight()
          {
          
-            return 
+            return
                switch (this)
                {
                
@@ -184,43 +184,43 @@ public sealed abstract class AOC_2020
                case 'S' -> row      += value;
                case 'E' -> column   += value;
                case 'W' -> column   -= value;
-               case 'L' -> direction = 
+               case 'L' -> direction =
                               switch (value)
                               {
-                              
+                     
                                  case 90  -> direction.turnLeft();
                                  case 180 -> direction.turnLeft().turnLeft();
                                  case 270 -> direction.turnRight();
                                  default  -> throw new IllegalArgumentException("bad value for turning -- " + value);
-                              
+                     
                               };
-               case 'R' -> direction = 
+               case 'R' -> direction =
                               switch (value)
                               {
-                              
+                     
                                  case 90  -> direction.turnRight();
                                  case 180 -> direction.turnRight().turnRight();
                                  case 270 -> direction.turnLeft();
                                  default  -> throw new IllegalArgumentException("bad value for turning -- " + value);
-                              
+                     
                               };
-               case 'F' -> 
+               case 'F' ->
                {
                   switch (direction)
                   {
-                              
+                  
                      case NORTH  -> row      -= value;
                      case SOUTH  -> row      += value;
                      case EAST   -> column   += value;
                      case WEST   -> column   -= value;
-                              
+                  
                   }
                }
             
             }
          
          }
-         
+      
          System.out.println(row);
          System.out.println(column);
          System.out.println(direction);
@@ -230,7 +230,143 @@ public sealed abstract class AOC_2020
       public void part2()
       {
       
+         final List<String> instructions =
+            this
+            .fetchLines("day12.txt")
+            .toList()
+            ;
       
+         int shipRow = 0;
+         int shipColumn = 0;
+         int wayPointRow = -1;
+         int wayPointColumn = 10;
+      
+         Direction direction = Direction.EAST;
+      
+         for (String instruction : instructions)
+         {
+         
+            final char action = instruction.charAt(0);
+            final int value = Integer.parseInt(instruction.substring(1));
+         
+            switch (action)
+            {
+            
+               case 'N' -> wayPointRow    -= value;
+               case 'S' -> wayPointRow    += value;
+               case 'E' -> wayPointColumn += value;
+               case 'W' -> wayPointColumn -= value;
+               case 'L' ->
+               {
+               
+                  switch (value)
+                  {
+                  
+                     case 90  ->
+                     {
+                     
+                        final int deltaRow = wayPointRow - shipRow;
+                        final int deltaColumn = wayPointColumn - shipColumn;
+                        
+                        wayPointRow = shipRow - deltaColumn;
+                        wayPointColumn = shipColumn + deltaRow;
+                     
+                     }
+                  
+                     case 180 ->
+                     {
+                     
+                        final int deltaRow = shipRow - wayPointRow;
+                        final int deltaColumn = shipColumn - wayPointColumn;
+                        
+                        wayPointRow = shipRow + deltaRow;
+                        wayPointColumn = shipColumn + deltaColumn;
+                     
+                     }
+                  
+                     case 270 ->
+                     {
+                     
+                        final int deltaRow = wayPointRow - shipRow;
+                        final int deltaColumn = wayPointColumn - shipColumn;
+                        
+                        wayPointRow = shipRow + deltaColumn;
+                        wayPointColumn = shipColumn - deltaRow;
+                     
+                     }
+                  
+                     default  -> throw new IllegalArgumentException("bad value for turning -- " + value);
+                  
+                  }
+               
+               }
+               
+               case 'R' ->
+               {
+               
+                  switch (value)
+                  {
+                  
+                     case 90  ->
+                     {
+                     
+                        final int deltaRow = wayPointRow - shipRow;
+                        final int deltaColumn = wayPointColumn - shipColumn;
+                        
+                        wayPointRow = shipRow + deltaColumn;
+                        wayPointColumn = shipColumn - deltaRow;
+                     
+                     }
+                  
+                     case 180 ->
+                     {
+                     
+                        final int deltaRow = shipRow - wayPointRow;
+                        final int deltaColumn = shipColumn - wayPointColumn;
+                        
+                        wayPointRow = shipRow + deltaRow;
+                        wayPointColumn = shipColumn + deltaColumn;
+                     
+                     }
+                  
+                     case 270 ->
+                     {
+                     
+                        final int deltaRow = wayPointRow - shipRow;
+                        final int deltaColumn = wayPointColumn - shipColumn;
+                        
+                        wayPointRow = shipRow - deltaColumn;
+                        wayPointColumn = shipColumn + deltaRow;
+                     
+                     }
+                  
+                     default  -> throw new IllegalArgumentException("bad value for turning -- " + value);
+                  
+                  }
+               
+               }
+               
+               case 'F' ->
+               {
+               
+                  final int deltaRow = wayPointRow - shipRow;
+                  final int deltaColumn = wayPointColumn - shipColumn;
+               
+                  wayPointRow = wayPointRow + (deltaRow * value);
+                  wayPointColumn = wayPointColumn + (deltaColumn * value);
+                  shipRow = shipRow + (deltaRow * value);
+                  shipColumn = shipColumn + (deltaColumn * value);
+               
+               }
+            
+            }
+         
+         }
+      
+         System.out.println("shipRow = " + shipRow);
+         System.out.println("shipColumn = " + shipColumn);
+         System.out.println("wayPointRow = " + wayPointRow);
+         System.out.println("wayPointColumn = " + wayPointColumn);
       
       }
    
