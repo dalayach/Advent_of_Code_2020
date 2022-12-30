@@ -3,6 +3,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -107,7 +109,53 @@ public sealed abstract class AOC_2020
    public static void main(String[] args)
    {
    
-      new Day12().part2();
+      new Day13().part1();
+   
+   }
+
+   private static final class Day13 extends AOC_2020
+   {
+   
+      public void part1()
+      {
+      
+         final long earliestTimestamp;
+         final SortedSet<Long> busIds;
+      
+         fetchRelevantData:
+         {
+         
+            final List<String> schedule =
+               this
+                  .fetchLines("day13.txt")
+                  .toList()
+                  ;
+         
+            final List<Long> contents = Arrays.asList(schedule.get(1).split(",")).stream().filter(each -> !each.equals("x")).map(Long::parseLong).toList();
+            final SortedSet<Long> tempLong = new TreeSet<>(contents);
+         
+            earliestTimestamp = Long.parseLong(schedule.get(0));
+            busIds = Collections.unmodifiableSortedSet(tempLong);
+            
+         }
+      
+         System.out.println(earliestTimestamp);
+         System.out.println(busIds);
+         
+         for (long busId : busIds)
+         {
+         
+            final long what = earliestTimestamp / busId;
+         
+         }
+         
+      }
+   
+      public void part2()
+      {
+      
+      
+      }
    
    }
 
@@ -267,7 +315,7 @@ public sealed abstract class AOC_2020
                      
                         final int deltaRow = wayPointRow - shipRow;
                         final int deltaColumn = wayPointColumn - shipColumn;
-                        
+                     
                         wayPointRow = shipRow - deltaColumn;
                         wayPointColumn = shipColumn + deltaRow;
                      
@@ -278,7 +326,7 @@ public sealed abstract class AOC_2020
                      
                         final int deltaRow = shipRow - wayPointRow;
                         final int deltaColumn = shipColumn - wayPointColumn;
-                        
+                     
                         wayPointRow = shipRow + deltaRow;
                         wayPointColumn = shipColumn + deltaColumn;
                      
@@ -289,7 +337,7 @@ public sealed abstract class AOC_2020
                      
                         final int deltaRow = wayPointRow - shipRow;
                         final int deltaColumn = wayPointColumn - shipColumn;
-                        
+                     
                         wayPointRow = shipRow + deltaColumn;
                         wayPointColumn = shipColumn - deltaRow;
                      
@@ -300,7 +348,7 @@ public sealed abstract class AOC_2020
                   }
                
                }
-               
+            
                case 'R' ->
                {
                
@@ -312,7 +360,7 @@ public sealed abstract class AOC_2020
                      
                         final int deltaRow = wayPointRow - shipRow;
                         final int deltaColumn = wayPointColumn - shipColumn;
-                        
+                     
                         wayPointRow = shipRow + deltaColumn;
                         wayPointColumn = shipColumn - deltaRow;
                      
@@ -323,7 +371,7 @@ public sealed abstract class AOC_2020
                      
                         final int deltaRow = shipRow - wayPointRow;
                         final int deltaColumn = shipColumn - wayPointColumn;
-                        
+                     
                         wayPointRow = shipRow + deltaRow;
                         wayPointColumn = shipColumn + deltaColumn;
                      
@@ -334,7 +382,7 @@ public sealed abstract class AOC_2020
                      
                         final int deltaRow = wayPointRow - shipRow;
                         final int deltaColumn = wayPointColumn - shipColumn;
-                        
+                     
                         wayPointRow = shipRow - deltaColumn;
                         wayPointColumn = shipColumn + deltaRow;
                      
@@ -345,7 +393,7 @@ public sealed abstract class AOC_2020
                   }
                
                }
-               
+            
                case 'F' ->
                {
                
