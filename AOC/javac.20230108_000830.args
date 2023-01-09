@@ -1,0 +1,9 @@
+-d
+..\\classes
+-g
+-Xlint:all,preview,-serial,-auxiliaryclass
+--enable-preview
+--release
+20
+-Xdiags:verbose
+AOC_2020.java

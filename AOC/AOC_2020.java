@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -109,7 +110,7 @@ public sealed abstract class AOC_2020
    public static void main(String[] args)
    {
    
-      new Day13().part1();
+      new Day13().part2();
    
    }
 
@@ -131,29 +132,94 @@ public sealed abstract class AOC_2020
                   .toList()
                   ;
          
-            final List<Long> contents = Arrays.asList(schedule.get(1).split(",")).stream().filter(each -> !each.equals("x")).map(Long::parseLong).toList();
+            final List<Long> contents =
+               Arrays
+                  .asList(schedule.get(1).split(","))
+                  .stream()
+                  .filter(each -> !each.equals("x"))
+                  .map(Long::parseLong)
+                  .toList()
+                  ;
+         
             final SortedSet<Long> tempLong = new TreeSet<>(contents);
          
             earliestTimestamp = Long.parseLong(schedule.get(0));
             busIds = Collections.unmodifiableSortedSet(tempLong);
-            
+         
          }
       
          System.out.println(earliestTimestamp);
          System.out.println(busIds);
-         
+      
          for (long busId : busIds)
          {
          
-            final long what = earliestTimestamp / busId;
+            final long waitDuration = busId - (earliestTimestamp % busId);
+         
+            System.out.println("waitDuration = " + waitDuration + " ---- busId = " + busId );
          
          }
-         
+      
       }
    
       public void part2()
       {
       
+         interface BusType
+         {
+         
+            record KnownId(int id, int index) implements BusType {}
+            record UnknownId() implements BusType {}
+         
+            public static BusType parse(String value, int index)
+            {
+            
+               Objects.requireNonNull(value);
+               
+               if (value.matches("\\d+"))
+               {
+               
+                  return new KnownId(Integer.parseInt(value), index);
+               
+               }
+               
+               else
+               {
+               
+                  return new UnknownId();
+               
+               }
+            
+            }
+         
+         }
+         
+         final SortedSet<Long> busIds;
+      
+         fetchRelevantData:
+         {
+         
+            final List<String> schedule =
+               this
+                  .fetchLines("day13.txt")
+                  .toList()
+                  ;
+         
+            final List<Long> contents =
+               Arrays
+                  .asList(schedule.get(1).split(","))
+                  .stream()
+                  .map(Long::parseLong)
+                  .toList()
+                  ;
+         
+            final SortedSet<Long> tempLong = new TreeSet<>(contents);
+         
+            busIds = Collections.unmodifiableSortedSet(tempLong);
+         
+         }
+      
+         System.out.println(busIds);
       
       }
    
