@@ -162,39 +162,50 @@ public sealed abstract class AOC_2020
       
       }
    
-      public void part2()
+      public static sealed interface BusType extends Comparable<BusType>
       {
       
-         interface BusType
+         default int compareTo(final BusType other)
          {
          
-            record KnownId(int id, int index) implements BusType {}
-            record UnknownId() implements BusType {}
+            Objects.requireNonNull(other);
          
-            public static BusType parse(String value, int index)
+            return Integer.compare(this.index(), other.index());
+         
+         }
+      
+         int index();
+      
+         public static BusType parse(String value, int index)
+         {
+         
+            Objects.requireNonNull(value);
+         
+            if (value.matches("\\d+"))
             {
             
-               Objects.requireNonNull(value);
-               
-               if (value.matches("\\d+"))
-               {
-               
-                  return new KnownId(Integer.parseInt(value), index);
-               
-               }
-               
-               else
-               {
-               
-                  return new UnknownId();
-               
-               }
+               return new KnownId(Integer.parseInt(value), index);
+            
+            }
+            
+            else
+            {
+            
+               return new UnknownId(index);
             
             }
          
          }
-         
-         final SortedSet<Long> busIds;
+      
+      }
+   
+      public static record KnownId(int id, int index) implements BusType {}
+      public static record UnknownId(int index) implements BusType {}
+   
+      public void part2()
+      {
+      
+         final List<KnownId> buses;
       
          fetchRelevantData:
          {
@@ -205,21 +216,63 @@ public sealed abstract class AOC_2020
                   .toList()
                   ;
          
-            final List<Long> contents =
-               Arrays
-                  .asList(schedule.get(1).split(","))
-                  .stream()
-                  .map(Long::parseLong)
-                  .toList()
-                  ;
+            final List<String> input = Arrays.asList(schedule.get(1).split(","));
          
-            final SortedSet<Long> tempLong = new TreeSet<>(contents);
+            final List<BusType> contents = new ArrayList<>();
          
-            busIds = Collections.unmodifiableSortedSet(tempLong);
+            for (int i = 0; i < input.size(); i++)
+            {
+            
+               contents.add(BusType.parse(input.get(i), i));
+            
+            }
+         
+            buses = Collections.unmodifiableList(contents.stream().filter(KnownId.class::isInstance).map(KnownId.class::cast).toList());
          
          }
       
-         System.out.println(busIds);
+         System.out.println(buses);
+         
+         final int interval = buses.get(0).id();
+      
+         LongStream
+            .range(0, Long.MAX_VALUE/787)
+            .parallel()
+            .map(each -> each * 787)
+            .forEach
+            (
+               timestamp ->
+               {
+               
+                  for (final KnownId ki : buses)
+                  {
+                  
+                     if 
+                     (
+                           (timestamp - 48L) % 17 != 0L
+                        || (timestamp - 41L) % 41 != 0L
+                        || (timestamp - 31L) % 523 != 0L
+                        || (timestamp - 13L) % 13 != 0L
+                        || (timestamp - 12L) % 19 != 0L
+                        || (timestamp -  8L) % 23 != 0L
+                        || (timestamp +  6L) % 37 != 0L
+                        || (timestamp + 29L) % 29 != 0L
+                     )
+                     {
+                     
+                        return;
+                     
+                     }
+                  
+                  }
+               
+                  System.out.println("Found the answer -- " + timestamp);
+               
+                  return;
+               
+               }
+            )
+            ;
       
       }
    
