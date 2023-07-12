@@ -1,7 +1,9 @@
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -162,17 +164,8 @@ public sealed abstract class AOC_2020
       
       }
    
-      public static sealed interface BusType extends Comparable<BusType>
+      public static sealed interface BusType
       {
-      
-         default int compareTo(final BusType other)
-         {
-         
-            Objects.requireNonNull(other);
-         
-            return Integer.compare(this.index(), other.index());
-         
-         }
       
          int index();
       
@@ -199,20 +192,72 @@ public sealed abstract class AOC_2020
       
       }
    
-      public static record KnownId(int id, int index) implements BusType {}
+      public static record KnownId(int id, int index) implements BusType, Comparable<KnownId>
+      {
+      
+         public static final Comparator<KnownId> COMPARATOR = 
+            Comparator
+               .comparingInt(KnownId::index)
+               ;
+      
+         @Override
+         public int compareTo(final KnownId other)
+         {
+         
+            Objects.requireNonNull(other);
+         
+            return COMPARATOR.compare(this, other);
+         
+         }
+         
+         public int startingPoint()
+         {
+         
+            return this.index();
+         
+         }
+         
+         public int rateOfIncrease()
+         {
+         
+            return this.id();
+         
+         }
+      
+      }
+   
       public static record UnknownId(int index) implements BusType {}
+   
+      private Stream<String> stream(String... strings)
+      {
+      
+         return Stream.of(strings);
+      
+      }
    
       public void part2()
       {
       
-         final List<KnownId> buses;
+         final SortedSet<KnownId> buses;
+         final BigInteger MAX_INDEX;
+      
+         final String TEST_DATA = 
+            "17,x,13,19"       // answer is 3417
+            //"67,7,59,61"       // answer is 754018
+            //"67,x,7,59,61"     // answer is 779210
+            //"67,7,x,59,61"     // answer is 1261476
+            //"1789,37,47,1889"  // answer is 1202161486
+            //"7,13,x,x,59,x,31,19"
+            //""
+            ;
       
          fetchRelevantData:
          {
          
             final List<String> schedule =
                this
-                  .fetchLines("day13.txt")
+                  //.fetchLines("day13.txt")
+                  .stream("123\n", TEST_DATA)
                   .toList()
                   ;
          
@@ -226,54 +271,89 @@ public sealed abstract class AOC_2020
                contents.add(BusType.parse(input.get(i), i));
             
             }
-         
-            buses = Collections.unmodifiableList(contents.stream().filter(KnownId.class::isInstance).map(KnownId.class::cast).toList());
-         
+            
+            buses =
+               Collections
+                  .unmodifiableSortedSet
+                  (
+                     contents
+                        .stream()
+                        .filter(KnownId.class::isInstance)
+                        .map(KnownId.class::cast)
+                        .collect(Collectors.toCollection(TreeSet::new))
+                  )
+                  ;
+                  
+            MAX_INDEX = 
+               buses
+                  .stream()
+                  .mapToLong(KnownId::index)
+                  .mapToObj(BigInteger::valueOf)
+                  .max(Comparator.naturalOrder())
+                  .orElseThrow()
+                  ;
+            
          }
       
-         System.out.println(buses);
+         System.out.println("---\n" + LocalDateTime.now());
+         buses.forEach(System.out::println);
          
-         final int interval = buses.get(0).id();
-      
-         LongStream
-            .range(0, Long.MAX_VALUE/787)
-            .parallel()
-            .map(each -> each * 787)
-            .forEach
-            (
-               timestamp ->
+         final BigInteger ZERO = BigInteger.ZERO;
+         BigInteger first = ZERO;
+         BigInteger second = ZERO;
+         BigInteger stepSize = ZERO;
+         
+         mainLoop:
+         for (final KnownId eachId : buses)
+         {
+         
+            final BigInteger index = BigInteger.valueOf(eachId.index());
+            final BigInteger id    = BigInteger.valueOf(eachId.id());
+         
+            if (first.equals(ZERO) && second.equals(ZERO) && stepSize.equals(ZERO))
+            {
+            
+               first = index;
+               stepSize = id;
+               second = first.add(stepSize);
+               
+               continue mainLoop;
+            
+            }
+            
+            else
+            {
+            
+               final BigInteger remainder = id.subtract(index);
+            
+               while (!first.mod(id).equals(remainder))
                {
                
-                  for (final KnownId ki : buses)
-                  {
-                  
-                     if 
-                     (
-                           (timestamp - 48L) % 17 != 0L
-                        || (timestamp - 41L) % 41 != 0L
-                        || (timestamp - 31L) % 523 != 0L
-                        || (timestamp - 13L) % 13 != 0L
-                        || (timestamp - 12L) % 19 != 0L
-                        || (timestamp -  8L) % 23 != 0L
-                        || (timestamp +  6L) % 37 != 0L
-                        || (timestamp + 29L) % 29 != 0L
-                     )
-                     {
-                     
-                        return;
-                     
-                     }
-                  
-                  }
-               
-                  System.out.println("Found the answer -- " + timestamp);
-               
-                  return;
+                  first = first.add(stepSize);
                
                }
-            )
-            ;
-      
+               
+               second = first.subtract(id);
+               
+               do
+               {
+               
+                  second = second.add(stepSize);
+               
+               }
+               
+               while (!second.mod(id).equals(remainder));
+               
+               stepSize = second.subtract(first);
+            
+            }
+         
+         }
+         
+         System.out.println("first\t" + first);
+         System.out.println("second\t" + first);
+         System.out.println("stepSize\t" + first);
+         
       }
    
    }
@@ -284,10 +364,14 @@ public sealed abstract class AOC_2020
       private enum Direction
       {
       
-         NORTH,
-         SOUTH,
-         EAST,
-         WEST,
+         NORTH
+         ,
+         SOUTH
+         ,
+         EAST
+         ,
+         WEST
+         ,
          ;
       
          public Direction turnLeft()
@@ -347,11 +431,16 @@ public sealed abstract class AOC_2020
             switch (action)
             {
             
-               case 'N' -> row      -= value;
-               case 'S' -> row      += value;
-               case 'E' -> column   += value;
-               case 'W' -> column   -= value;
-               case 'L' -> direction =
+               case 'N' -> 
+                  row      -= value;
+               case 'S' -> 
+                  row      += value;
+               case 'E' -> 
+                  column   += value;
+               case 'W' -> 
+                  column   -= value;
+               case 'L' -> 
+                  direction =
                               switch (value)
                               {
                      
@@ -361,7 +450,8 @@ public sealed abstract class AOC_2020
                                  default  -> throw new IllegalArgumentException("bad value for turning -- " + value);
                      
                               };
-               case 'R' -> direction =
+               case 'R' -> 
+                  direction =
                               switch (value)
                               {
                      
@@ -376,10 +466,14 @@ public sealed abstract class AOC_2020
                   switch (direction)
                   {
                   
-                     case NORTH  -> row      -= value;
-                     case SOUTH  -> row      += value;
-                     case EAST   -> column   += value;
-                     case WEST   -> column   -= value;
+                     case NORTH  -> 
+                        row      -= value;
+                     case SOUTH  -> 
+                        row      += value;
+                     case EAST   -> 
+                        column   += value;
+                     case WEST   -> 
+                        column   -= value;
                   
                   }
                }
@@ -419,10 +513,14 @@ public sealed abstract class AOC_2020
             switch (action)
             {
             
-               case 'N' -> wayPointRow    -= value;
-               case 'S' -> wayPointRow    += value;
-               case 'E' -> wayPointColumn += value;
-               case 'W' -> wayPointColumn -= value;
+               case 'N' -> 
+                  wayPointRow    -= value;
+               case 'S' -> 
+                  wayPointRow    += value;
+               case 'E' -> 
+                  wayPointColumn += value;
+               case 'W' -> 
+                  wayPointColumn -= value;
                case 'L' ->
                {
                
@@ -462,7 +560,8 @@ public sealed abstract class AOC_2020
                      
                      }
                   
-                     default  -> throw new IllegalArgumentException("bad value for turning -- " + value);
+                     default  -> 
+                        throw new IllegalArgumentException("bad value for turning -- " + value);
                   
                   }
                
@@ -507,7 +606,8 @@ public sealed abstract class AOC_2020
                      
                      }
                   
-                     default  -> throw new IllegalArgumentException("bad value for turning -- " + value);
+                     default  -> 
+                        throw new IllegalArgumentException("bad value for turning -- " + value);
                   
                   }
                
@@ -666,14 +766,22 @@ public sealed abstract class AOC_2020
          final IntUnaryOperator noChange = IntUnaryOperator.identity();
       
       
-         /** N  */surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, minusOne,   noChange);
-         /** NE */surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, minusOne,   plusOne);
-         /** E  */surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, noChange,   plusOne);
-         /** SE */surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, plusOne,    plusOne);
-         /** S  */surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, plusOne,    noChange);
-         /** SW */surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, plusOne,    minusOne);
-         /** W  */surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, noChange,   minusOne);
-         /** NW */surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, minusOne,   minusOne);
+         /** N  */
+         surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, minusOne,   noChange);
+         /** NE */
+         surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, minusOne,   plusOne);
+         /** E  */
+         surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, noChange,   plusOne);
+         /** SE */
+         surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, plusOne,    plusOne);
+         /** S  */
+         surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, plusOne,    noChange);
+         /** SW */
+         surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, plusOne,    minusOne);
+         /** W  */
+         surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, noChange,   minusOne);
+         /** NW */
+         surroundingNumberOfPeople += this.day11_2_checkDirection(grid, row, column, rowLimit, columnLimit, minusOne,   minusOne);
       
          if (currentCell.equals("L") && surroundingNumberOfPeople == 0)
          {
