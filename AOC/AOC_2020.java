@@ -1,3 +1,4 @@
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -45,7 +46,8 @@ public sealed abstract class AOC_2020
       {
       
          return
-            Files.lines(Path.of("..", "input_files", fileName))
+            Files
+               .lines(Path.of("..", "input_files", fileName))
                ;
       
       }
@@ -53,7 +55,7 @@ public sealed abstract class AOC_2020
       catch (IOException ioe)
       {
       
-         throw new IllegalArgumentException("Could not find the file titled " + fileName);
+         throw new IllegalArgumentException("Could not find the file titled " + fileName, ioe);
       
       }
    
@@ -82,7 +84,7 @@ public sealed abstract class AOC_2020
       
          final List<List<String>> result = new ArrayList<>();
       
-         for (String each : list)
+         for (final String each : list)
          {
          
             result.add(List.of(each.split("")));
@@ -96,7 +98,7 @@ public sealed abstract class AOC_2020
       catch (IOException ioe)
       {
       
-         throw new IllegalArgumentException("Could not find the file titled " + fileName);
+         throw new IllegalArgumentException("Could not find the file titled " + fileName, ioe);
       
       }
    
@@ -153,7 +155,7 @@ public sealed abstract class AOC_2020
          System.out.println(earliestTimestamp);
          System.out.println(busIds);
       
-         for (long busId : busIds)
+         for (final long busId : busIds)
          {
          
             final long waitDuration = busId - (earliestTimestamp % busId);
@@ -195,7 +197,7 @@ public sealed abstract class AOC_2020
       public static record KnownId(int id, int index) implements BusType, Comparable<KnownId>
       {
       
-         public static final Comparator<KnownId> COMPARATOR = 
+         public static final Comparator<KnownId> COMPARATOR =
             Comparator
                .comparingInt(KnownId::index)
                ;
@@ -209,14 +211,14 @@ public sealed abstract class AOC_2020
             return COMPARATOR.compare(this, other);
          
          }
-         
+      
          public int startingPoint()
          {
          
             return this.index();
          
          }
-         
+      
          public int rateOfIncrease()
          {
          
@@ -241,7 +243,7 @@ public sealed abstract class AOC_2020
          final SortedSet<KnownId> buses;
          final BigInteger MAX_INDEX;
       
-         final String TEST_DATA = 
+         final String TEST_DATA =
             "17,x,13,19"       // answer is 3417
             //"67,7,59,61"       // answer is 754018
             //"67,x,7,59,61"     // answer is 779210
@@ -271,7 +273,7 @@ public sealed abstract class AOC_2020
                contents.add(BusType.parse(input.get(i), i));
             
             }
-            
+         
             buses =
                Collections
                   .unmodifiableSortedSet
@@ -283,8 +285,8 @@ public sealed abstract class AOC_2020
                         .collect(Collectors.toCollection(TreeSet::new))
                   )
                   ;
-                  
-            MAX_INDEX = 
+         
+            MAX_INDEX =
                buses
                   .stream()
                   .mapToLong(KnownId::index)
@@ -292,17 +294,17 @@ public sealed abstract class AOC_2020
                   .max(Comparator.naturalOrder())
                   .orElseThrow()
                   ;
-            
+         
          }
       
          System.out.println("---\n" + LocalDateTime.now());
          buses.forEach(System.out::println);
-         
+      
          final BigInteger ZERO = BigInteger.ZERO;
          BigInteger first = ZERO;
          BigInteger second = ZERO;
          BigInteger stepSize = ZERO;
-         
+      
          mainLoop:
          for (final KnownId eachId : buses)
          {
@@ -316,7 +318,7 @@ public sealed abstract class AOC_2020
                first = index;
                stepSize = id;
                second = first.add(stepSize);
-               
+            
                continue mainLoop;
             
             }
@@ -332,9 +334,9 @@ public sealed abstract class AOC_2020
                   first = first.add(stepSize);
                
                }
-               
+            
                second = first.subtract(id);
-               
+            
                do
                {
                
@@ -343,17 +345,17 @@ public sealed abstract class AOC_2020
                }
                
                while (!second.mod(id).equals(remainder));
-               
+            
                stepSize = second.subtract(first);
             
             }
          
          }
-         
+      
          System.out.println("first\t" + first);
          System.out.println("second\t" + first);
          System.out.println("stepSize\t" + first);
-         
+      
       }
    
    }
@@ -364,14 +366,10 @@ public sealed abstract class AOC_2020
       private enum Direction
       {
       
-         NORTH
-         ,
-         SOUTH
-         ,
-         EAST
-         ,
-         WEST
-         ,
+         NORTH,
+         SOUTH,
+         EAST,
+         WEST,
          ;
       
          public Direction turnLeft()
@@ -381,10 +379,10 @@ public sealed abstract class AOC_2020
                switch (this)
                {
                
-                  case NORTH  -> WEST;
-                  case WEST   -> SOUTH;
-                  case SOUTH  -> EAST;
-                  case EAST   -> NORTH;
+                  case  NORTH -> WEST;
+                  case  WEST  -> SOUTH;
+                  case  SOUTH -> EAST;
+                  case  EAST  -> NORTH;
                
                };
          
@@ -397,10 +395,10 @@ public sealed abstract class AOC_2020
                switch (this)
                {
                
-                  case NORTH  -> EAST;
-                  case EAST   -> SOUTH;
-                  case SOUTH  -> WEST;
-                  case WEST   -> NORTH;
+                  case  NORTH -> EAST;
+                  case  EAST  -> SOUTH;
+                  case  SOUTH -> WEST;
+                  case  WEST  -> NORTH;
                
                };
          
@@ -414,15 +412,15 @@ public sealed abstract class AOC_2020
       
          final List<String> instructions =
             this
-            .fetchLines("day12.txt")
-            .toList()
-            ;
+               .fetchLines("day12.txt")
+               .toList()
+               ;
       
          int row = 0;
          int column = 0;
          Direction direction = Direction.EAST;
       
-         for (String instruction : instructions)
+         for (final String instruction : instructions)
          {
          
             final char action = instruction.charAt(0);
@@ -431,51 +429,47 @@ public sealed abstract class AOC_2020
             switch (action)
             {
             
-               case 'N' -> 
-                  row      -= value;
-               case 'S' -> 
-                  row      += value;
-               case 'E' -> 
-                  column   += value;
-               case 'W' -> 
-                  column   -= value;
-               case 'L' -> 
+               case  'N'   -> row      -= value;
+               case  'S'   -> row      += value;
+               case  'E'   -> column   += value;
+               case  'W'   -> column   -= value;
+               case  'L'   ->
                   direction =
-                              switch (value)
-                              {
+                     switch (value)
+                     {
                      
-                                 case 90  -> direction.turnLeft();
-                                 case 180 -> direction.turnLeft().turnLeft();
-                                 case 270 -> direction.turnRight();
-                                 default  -> throw new IllegalArgumentException("bad value for turning -- " + value);
+                        case  90    -> direction.turnLeft();
+                        case  180   -> direction.turnLeft().turnLeft();
+                        case  270   -> direction.turnRight();
+                        default     -> throw new IllegalArgumentException("bad value for turning -- " + value);
                      
-                              };
-               case 'R' -> 
+                     }
+                     ;
+               case  'R'   ->
                   direction =
-                              switch (value)
-                              {
+                     switch (value)
+                     {
                      
-                                 case 90  -> direction.turnRight();
-                                 case 180 -> direction.turnRight().turnRight();
-                                 case 270 -> direction.turnLeft();
-                                 default  -> throw new IllegalArgumentException("bad value for turning -- " + value);
+                        case  90    -> direction.turnRight();
+                        case  180   -> direction.turnRight().turnRight();
+                        case  270   -> direction.turnLeft();
+                        default     -> throw new IllegalArgumentException("bad value for turning -- " + value);
                      
-                              };
-               case 'F' ->
+                     }
+                     ;
+               case  'F'   ->
                {
+               
                   switch (direction)
                   {
                   
-                     case NORTH  -> 
-                        row      -= value;
-                     case SOUTH  -> 
-                        row      += value;
-                     case EAST   -> 
-                        column   += value;
-                     case WEST   -> 
-                        column   -= value;
+                     case  NORTH -> row      -= value;
+                     case  SOUTH -> row      += value;
+                     case  EAST  -> column   += value;
+                     case  WEST  -> column   -= value;
                   
                   }
+               
                }
             
             }
@@ -493,9 +487,9 @@ public sealed abstract class AOC_2020
       
          final List<String> instructions =
             this
-            .fetchLines("day12.txt")
-            .toList()
-            ;
+               .fetchLines("day12.txt")
+               .toList()
+               ;
       
          int shipRow = 0;
          int shipColumn = 0;
@@ -504,7 +498,7 @@ public sealed abstract class AOC_2020
       
          Direction direction = Direction.EAST;
       
-         for (String instruction : instructions)
+         for (final String instruction : instructions)
          {
          
             final char action = instruction.charAt(0);
@@ -513,21 +507,17 @@ public sealed abstract class AOC_2020
             switch (action)
             {
             
-               case 'N' -> 
-                  wayPointRow    -= value;
-               case 'S' -> 
-                  wayPointRow    += value;
-               case 'E' -> 
-                  wayPointColumn += value;
-               case 'W' -> 
-                  wayPointColumn -= value;
-               case 'L' ->
+               case  'N'   -> wayPointRow    -= value;
+               case  'S'   -> wayPointRow    += value;
+               case  'E'   -> wayPointColumn += value;
+               case  'W'   -> wayPointColumn -= value;
+               case  'L'   ->
                {
                
                   switch (value)
                   {
                   
-                     case 90  ->
+                     case  90    ->
                      {
                      
                         final int deltaRow = wayPointRow - shipRow;
@@ -538,7 +528,7 @@ public sealed abstract class AOC_2020
                      
                      }
                   
-                     case 180 ->
+                     case  180   ->
                      {
                      
                         final int deltaRow = shipRow - wayPointRow;
@@ -549,7 +539,7 @@ public sealed abstract class AOC_2020
                      
                      }
                   
-                     case 270 ->
+                     case  270   ->
                      {
                      
                         final int deltaRow = wayPointRow - shipRow;
@@ -560,20 +550,20 @@ public sealed abstract class AOC_2020
                      
                      }
                   
-                     default  -> 
+                     default     ->
                         throw new IllegalArgumentException("bad value for turning -- " + value);
                   
                   }
                
                }
             
-               case 'R' ->
+               case  'R'   ->
                {
                
                   switch (value)
                   {
                   
-                     case 90  ->
+                     case  90    ->
                      {
                      
                         final int deltaRow = wayPointRow - shipRow;
@@ -584,7 +574,7 @@ public sealed abstract class AOC_2020
                      
                      }
                   
-                     case 180 ->
+                     case  180   ->
                      {
                      
                         final int deltaRow = shipRow - wayPointRow;
@@ -595,7 +585,7 @@ public sealed abstract class AOC_2020
                      
                      }
                   
-                     case 270 ->
+                     case  270   ->
                      {
                      
                         final int deltaRow = wayPointRow - shipRow;
@@ -606,14 +596,14 @@ public sealed abstract class AOC_2020
                      
                      }
                   
-                     default  -> 
+                     default     ->
                         throw new IllegalArgumentException("bad value for turning -- " + value);
                   
                   }
                
                }
             
-               case 'F' ->
+               case  'F'   ->
                {
                
                   final int deltaRow = wayPointRow - shipRow;
@@ -647,7 +637,9 @@ public sealed abstract class AOC_2020
       {
       
          final List<List<String>> grid =
-            this.fetchFromFileAsStringGrid("day11.txt");
+            this
+               .fetchFromFileAsStringGrid("day11.txt")
+               ;
       
          final int rowLimit = grid.size();
       
@@ -664,13 +656,13 @@ public sealed abstract class AOC_2020
             
                int countOfSeats = 0;
             
-               for (List<String> eachRow : temp)
+               for (final List<String> eachRow : temp)
                {
                
-                  for (String eachCell : eachRow)
+                  for (final String eachCell : eachRow)
                   {
                   
-                     if (eachCell.equals("#"))
+                     if ("#".equals(eachCell))
                      {
                      
                         countOfSeats++;
@@ -690,10 +682,10 @@ public sealed abstract class AOC_2020
             
                String output = "";
             
-               for (List<String> eachRow : temp)
+               for (final List<String> eachRow : temp)
                {
                
-                  for (String eachCell : eachRow)
+                  for (final String eachCell : eachRow)
                   {
                   
                      output+= eachCell;
