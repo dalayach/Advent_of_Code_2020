@@ -19,16 +19,18 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 /** Solutions for Advent of Code 2020. */
-public sealed abstract class AOC_2020
+sealed abstract class AOC_2020
 {
 
-   public abstract void part1();
-   public abstract void part2();
+   abstract void part1();
+   abstract void part2();
 
    /**
     *
@@ -39,7 +41,7 @@ public sealed abstract class AOC_2020
     * @throw               If file cannot be found, or for other IO errors.
     *
     */
-   public Stream<String> fetchLines(String fileName)
+   Stream<String> fetchLines(String fileName)
    {
    
       try
@@ -70,7 +72,7 @@ public sealed abstract class AOC_2020
     * @throw               If file cannot be found, or for other IO errors.
     *
     */
-   public List<List<String>> fetchFromFileAsStringGrid(String fileName)
+   List<List<String>> fetchFromFileAsStringGrid(String fileName)
    {
    
       try
@@ -114,14 +116,207 @@ public sealed abstract class AOC_2020
    public static void main(String[] args)
    {
    
-      new Day13().part2();
+      new Day14().part1();
+   
+   }
+
+   private static final class Day14 extends AOC_2020
+   {
+   
+      sealed interface Value
+         permits
+            MaskValue,
+            WriteValue
+      {
+      
+      
+         static Value parseLine(final String line)
+         {
+         
+            Objects.requireNonNull(line);
+         
+            if (line.isBlank())
+            {
+            
+               throw new IllegalArgumentException("The line is blank!");
+            
+            }
+         
+            if (line.startsWith("mask"))
+            {
+            
+               return MaskValue.parseLine(line);
+            
+            }
+            
+            else if (line.startsWith("mem"))
+            {
+            
+               return WriteValue.parseLine(line);
+            
+            }
+            
+            else
+            {
+            
+               throw new IllegalArgumentException("Unrecognized value! - " + line);
+            
+            }
+         
+         }
+      
+      }
+      
+      enum MaskEntry
+      {
+      
+         SET,
+         CLEAR,
+         PASS,
+         ;
+      
+      }
+   
+      record MaskValue(List<MaskEntry> mask) implements Value
+      {
+      
+         private static final Pattern REGEX = Pattern.compile("^mask \\= (?<mask>[X01]{36})$");
+         
+         MaskValue
+         {
+         
+            Objects.requireNonNull(mask);
+            
+            if (mask.isEmpty())
+            {
+            
+               throw new IllegalArgumentException("mask is empty!");
+            
+            }
+         
+            if (mask.stream().anyMatch(Objects::isNull))
+            {
+            
+               throw new IllegalArgumentException("mask cannot contain nulls!");
+            
+            }
+         
+         }
+         
+         private static MaskValue parseLine(final String line)
+         {
+         
+            Objects.requireNonNull(line);
+            
+            if (line.isBlank())
+            {
+            
+               throw new IllegalArgumentException("line is blank! - " + line);
+            
+            }
+         
+            final Matcher matcher = REGEX.matcher(line);
+            
+            if (matcher.matches())
+            {
+            
+               final String rawMask = matcher.group("mask");
+               
+               Objects.requireNonNull(rawMask);
+               
+               if (rawMask.isBlank())
+               {
+               
+                  throw new IllegalArgumentException("mask is blank! - mask");
+               
+               }
+            
+               return 
+                  new MaskValue
+                  (
+                     rawMask
+                        .chars()
+                        .mapToObj
+                        (
+                           each -> 
+                              switch (each)
+                              {
+                              
+                                 case  '0'   -> MaskEntry.CLEAR;
+                                 case  '1'   -> MaskEntry.SET;
+                                 case  'X'   -> MaskEntry.PASS;
+                                 default     -> throw new IllegalStateException("? - " + each);
+                              
+                              }
+                        )
+                        .toList()
+                  )
+                  ;
+            
+            }
+            
+            else
+            {
+            
+               throw new IllegalArgumentException("line does not match the regex! - " + line);
+            
+            }
+         
+         }
+      
+      }
+   
+      record WriteValue(BigInteger index, BigInteger rawValue) implements Value
+      {
+      
+         WriteValue
+         {
+         
+            Objects.requireNonNull(index);
+            Objects.requireNonNull(rawValue);
+         
+         }
+         
+         private static WriteValue parseLine(final String line)
+         {
+         
+            throw new UnsupportedOperationException();
+         
+         }
+      
+      }
+   
+      void part1()
+      {
+      
+         final Object blah;
+      
+         FETCH_INPUT:
+         {
+         
+            final List<String> schedule =
+               this
+                  .fetchLines("day14.txt")
+                  .toList()
+                  ;
+         
+         }
+      
+      }
+   
+      void part2()
+      {
+      
+      
+      
+      }
    
    }
 
    private static final class Day13 extends AOC_2020
    {
    
-      public void part1()
+      void part1()
       {
       
          final long earliestTimestamp;
@@ -166,12 +361,12 @@ public sealed abstract class AOC_2020
       
       }
    
-      public static sealed interface BusType
+      static sealed interface BusType
       {
       
          int index();
       
-         public static BusType parse(String value, int index)
+         static BusType parse(String value, int index)
          {
          
             Objects.requireNonNull(value);
@@ -194,10 +389,10 @@ public sealed abstract class AOC_2020
       
       }
    
-      public static record KnownId(int id, int index) implements BusType, Comparable<KnownId>
+      static record KnownId(int id, int index) implements BusType, Comparable<KnownId>
       {
       
-         public static final Comparator<KnownId> COMPARATOR =
+         static final Comparator<KnownId> COMPARATOR =
             Comparator
                .comparingInt(KnownId::index)
                ;
@@ -212,14 +407,14 @@ public sealed abstract class AOC_2020
          
          }
       
-         public int startingPoint()
+         int startingPoint()
          {
          
             return this.index();
          
          }
       
-         public int rateOfIncrease()
+         int rateOfIncrease()
          {
          
             return this.id();
@@ -228,7 +423,7 @@ public sealed abstract class AOC_2020
       
       }
    
-      public static record UnknownId(int index) implements BusType {}
+      static record UnknownId(int index) implements BusType {}
    
       private Stream<String> stream(String... strings)
       {
@@ -237,7 +432,7 @@ public sealed abstract class AOC_2020
       
       }
    
-      public void part2()
+      void part2()
       {
       
          final SortedSet<KnownId> buses;
@@ -327,7 +522,7 @@ public sealed abstract class AOC_2020
                }
             
                busIndex++;
-               
+            
                if (busIndex == buses.size() - 1)
                {
                
@@ -376,7 +571,7 @@ public sealed abstract class AOC_2020
          WEST,
          ;
       
-         public Direction turnLeft()
+         Direction turnLeft()
          {
          
             return
@@ -392,7 +587,7 @@ public sealed abstract class AOC_2020
          
          }
       
-         public Direction turnRight()
+         Direction turnRight()
          {
          
             return
@@ -411,7 +606,7 @@ public sealed abstract class AOC_2020
       }
    
       /** Day 12 - part 1 */
-      public void part1()
+      void part1()
       {
       
          final List<String> instructions =
@@ -486,7 +681,7 @@ public sealed abstract class AOC_2020
       
       }
    
-      public void part2()
+      void part2()
       {
       
          final List<String> instructions =
@@ -637,7 +832,7 @@ public sealed abstract class AOC_2020
    {
    
       /** Day 11 - part 2 */
-      public void part2()
+      void part2()
       {
       
          final List<List<String>> grid =
@@ -655,7 +850,7 @@ public sealed abstract class AOC_2020
          record Grid(List<List<String>> temp)
          {
          
-            public int numberOfOccupiedSeats()
+            int numberOfOccupiedSeats()
             {
             
                int countOfSeats = 0;
@@ -802,7 +997,7 @@ public sealed abstract class AOC_2020
       
       }
    
-      public int day11_2_checkDirection(List<List<String>> grid, int row, int column, int rowLimit, int columnLimit, IntUnaryOperator rowModifier, IntUnaryOperator columnModifier)
+      int day11_2_checkDirection(List<List<String>> grid, int row, int column, int rowLimit, int columnLimit, IntUnaryOperator rowModifier, IntUnaryOperator columnModifier)
       {
       
          final String currentCell = grid.get(row).get(column);
@@ -854,7 +1049,7 @@ public sealed abstract class AOC_2020
       }
    
       /** Day 11 - part 1 */
-      public void part1()
+      void part1()
       {
       
          final List<List<String>> grid =
@@ -870,7 +1065,7 @@ public sealed abstract class AOC_2020
          record Grid(List<List<String>> temp)
          {
          
-            public int numberOfOccupiedSeats()
+            int numberOfOccupiedSeats()
             {
             
                int countOfSeats = 0;
@@ -1042,7 +1237,7 @@ public sealed abstract class AOC_2020
    {
    
       /** Day 10 - part 2 */
-      public void part2()
+      void part2()
       {
       
          final List<Long> lines =
@@ -1089,7 +1284,7 @@ public sealed abstract class AOC_2020
       }
    
       /** Day 10 - part 1 */
-      public void part1()
+      void part1()
       {
       
          List<Long> lines =
