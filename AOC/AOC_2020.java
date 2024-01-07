@@ -241,25 +241,24 @@ public sealed abstract class AOC_2020
       {
       
          final SortedSet<KnownId> buses;
-         final BigInteger MAX_INDEX;
-      
-         final String TEST_DATA =
-            "17,x,13,19"       // answer is 3417
-            //"67,7,59,61"       // answer is 754018
-            //"67,x,7,59,61"     // answer is 779210
-            //"67,7,x,59,61"     // answer is 1261476
-            //"1789,37,47,1889"  // answer is 1202161486
-            //"7,13,x,x,59,x,31,19"
-            //""
-            ;
       
          fetchRelevantData:
          {
          
+            final String TEST_DATA =
+               // "17,x,13,19"            // answer is 3417
+               // "67,7,59,61"            // answer is 754018
+               // "67,x,7,59,61"          // answer is 779210
+               // "67,7,x,59,61"          // answer is 1261476
+               // "1789,37,47,1889"       // answer is 1202161486
+               // "7,13,x,x,59,x,31,19"   // answer is 1068781
+               ""
+               ;
+         
             final List<String> schedule =
                this
-                  //.fetchLines("day13.txt")
-                  .stream("123\n", TEST_DATA)
+                  .fetchLines("day13.txt")
+                  // .stream("123\n", TEST_DATA)
                   .toList()
                   ;
          
@@ -286,15 +285,6 @@ public sealed abstract class AOC_2020
                   )
                   ;
          
-            MAX_INDEX =
-               buses
-                  .stream()
-                  .mapToLong(KnownId::index)
-                  .mapToObj(BigInteger::valueOf)
-                  .max(Comparator.naturalOrder())
-                  .orElseThrow()
-                  ;
-         
          }
       
          System.out.println("---\n" + LocalDateTime.now());
@@ -304,6 +294,9 @@ public sealed abstract class AOC_2020
          BigInteger first = ZERO;
          BigInteger second = ZERO;
          BigInteger stepSize = ZERO;
+         BigInteger finalAnswer = null;
+      
+         int busIndex = 0;
       
          mainLoop:
          for (final KnownId eachId : buses)
@@ -326,35 +319,46 @@ public sealed abstract class AOC_2020
             else
             {
             
-               final BigInteger remainder = id.subtract(index);
-            
-               while (!first.mod(id).equals(remainder))
+               while (!first.add(index).mod(id).equals(ZERO) || first.compareTo(id) < 0)
                {
                
                   first = first.add(stepSize);
                
                }
             
-               second = first.subtract(id);
-            
-               do
+               busIndex++;
+               
+               if (busIndex == buses.size() - 1)
                {
                
-                  second = second.add(stepSize);
+                  finalAnswer = first;
+                  break mainLoop;
                
                }
                
-               while (!second.mod(id).equals(remainder));
-            
-               stepSize = second.subtract(first);
+               else
+               {
+               
+                  second = first;
+               
+                  do
+                  {
+                  
+                     second = second.add(stepSize);
+                  
+                  }
+                  
+                  while (!second.add(index).mod(id).equals(ZERO));
+               
+                  stepSize = second.subtract(first);
+               
+               }
             
             }
          
          }
       
-         System.out.println("first\t" + first);
-         System.out.println("second\t" + first);
-         System.out.println("stepSize\t" + first);
+         System.out.println("finalAnswer\t" + finalAnswer);
       
       }
    
