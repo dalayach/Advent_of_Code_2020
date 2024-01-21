@@ -14,14 +14,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherer;
+import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -123,6 +127,8 @@ sealed abstract class AOC_2020
    private static final class Day14 extends AOC_2020
    {
    
+      public static final int NUMBER_OF_BITS = 36;
+   
       sealed interface Value
          permits
             MaskValue,
@@ -166,13 +172,13 @@ sealed abstract class AOC_2020
          }
       
       }
-      
+   
       enum MaskEntry
       {
       
-         SET,
-         CLEAR,
-         PASS,
+         ONE,
+         ZERO,
+         X,
          ;
       
       }
@@ -181,12 +187,12 @@ sealed abstract class AOC_2020
       {
       
          private static final Pattern REGEX = Pattern.compile("^mask \\= (?<mask>[X01]{36})$");
-         
+      
          MaskValue
          {
          
             Objects.requireNonNull(mask);
-            
+         
             if (mask.isEmpty())
             {
             
@@ -202,12 +208,12 @@ sealed abstract class AOC_2020
             }
          
          }
-         
+      
          private static MaskValue parseLine(final String line)
          {
          
             Objects.requireNonNull(line);
-            
+         
             if (line.isBlank())
             {
             
@@ -216,14 +222,14 @@ sealed abstract class AOC_2020
             }
          
             final Matcher matcher = REGEX.matcher(line);
-            
+         
             if (matcher.matches())
             {
             
                final String rawMask = matcher.group("mask");
-               
+            
                Objects.requireNonNull(rawMask);
-               
+            
                if (rawMask.isBlank())
                {
                
@@ -231,20 +237,20 @@ sealed abstract class AOC_2020
                
                }
             
-               return 
+               return
                   new MaskValue
                   (
                      rawMask
                         .chars()
                         .mapToObj
                         (
-                           each -> 
+                           each ->
                               switch (each)
                               {
                               
-                                 case  '0'   -> MaskEntry.CLEAR;
-                                 case  '1'   -> MaskEntry.SET;
-                                 case  'X'   -> MaskEntry.PASS;
+                                 case  '0'   -> MaskEntry.ZERO;
+                                 case  '1'   -> MaskEntry.ONE;
+                                 case  'X'   -> MaskEntry.X;
                                  default     -> throw new IllegalStateException("? - " + each);
                               
                               }
@@ -269,6 +275,8 @@ sealed abstract class AOC_2020
       record WriteValue(BigInteger index, BigInteger rawValue) implements Value
       {
       
+         private static final Pattern REGEX = Pattern.compile("^mem\\[(?<index>\\d+)\\]\\s+\\=\\s+(?<rawValue>\\d+)$");
+      
          WriteValue
          {
          
@@ -276,11 +284,48 @@ sealed abstract class AOC_2020
             Objects.requireNonNull(rawValue);
          
          }
-         
+      
          private static WriteValue parseLine(final String line)
          {
          
-            throw new UnsupportedOperationException();
+            VALIDATION:
+            {
+            
+               Objects.requireNonNull(line);
+            
+               if (line.isBlank())
+               {
+               
+                  throw new IllegalArgumentException("line cannot be blank!");
+               
+               }
+            
+            }
+         
+            final BigInteger index;
+            final BigInteger rawValue;
+         
+            EXTRACT:
+            {
+            
+               final Matcher matcher = REGEX.matcher(line);
+            
+               if (!matcher.matches())
+               {
+               
+                  throw new IllegalArgumentException("Invalid line! line = " + line);
+               
+               }
+            
+               final String rawIndex = matcher.group("index");
+               final String rawRawValue = matcher.group("rawValue");
+            
+               index = new BigInteger(rawIndex);
+               rawValue = new BigInteger(rawRawValue);
+            
+            }
+         
+            return new WriteValue(index, rawValue);
          
          }
       
@@ -289,25 +334,320 @@ sealed abstract class AOC_2020
       void part1()
       {
       
-         final Object blah;
+         record WriteValuesWithMask(MaskValue mask, List<WriteValue> writeValues)
+         {
+         
+            WriteValuesWithMask
+            {
+            
+               Objects.requireNonNull(mask);
+               Objects.requireNonNull(writeValues);
+            
+               if (writeValues.stream().anyMatch(Objects::isNull))
+               {
+               
+                  throw new IllegalArgumentException("writeValues cannot contain nulls! writeValues = " + writeValues);
+               
+               }
+            
+            }
+         
+            public static Optional<WriteValuesWithMask> parse(final List<Value> values)
+            {
+            
+               Objects.requireNonNull(values);
+            
+               if (values.isEmpty())
+               {
+               
+                  return Optional.empty();
+               
+               }
+            
+               if (!(values.getFirst() instanceof final MaskValue maskValue))
+               {
+               
+                  throw new IllegalArgumentException("First element must be a MaskValue! values = " + values);
+               
+               }
+            
+               final List<Value> writeValues = values.subList(1, values.size());
+            
+               if (!writeValues.stream().allMatch(WriteValue.class::isInstance))
+               {
+               
+                  throw new IllegalArgumentException("writeValues can only contain WriteValue! writeValues = " + writeValues);
+               
+               }
+            
+               return Optional.of(new WriteValuesWithMask(maskValue, writeValues.stream().map(WriteValue.class::cast).toList()));
+            
+            }
+         
+            public void writeValuesTo(final Map<BigInteger, BigInteger> map)
+            {
+            
+               Objects.requireNonNull(map);
+            
+               System.out.println(this);
+            
+               for (final WriteValue eachValue : this.writeValues)
+               {
+               
+                  BigInteger constructedValue = eachValue.rawValue();
+               
+                  System.out.println(NUMBER_OF_BITS);
+               
+                  for (int i = 0; i < NUMBER_OF_BITS; i++)
+                  {
+                  
+                     System.out.print(constructedValue + " --> ");
+                  
+                     final var maskBlah = this.mask.mask().reversed().get(i);
+                  
+                     System.out.print(maskBlah + " --> " + i + " --> ");
+                  
+                     constructedValue =
+                        switch (maskBlah)
+                        {
+                        
+                           case  ONE   -> constructedValue.setBit(i);
+                           case  ZERO  -> constructedValue.clearBit(i);
+                           case  X     -> constructedValue;
+                        
+                        }
+                        ;
+                  
+                     System.out.println(constructedValue);
+                  
+                  }
+               
+                  map.put(eachValue.index(), constructedValue);
+               
+                  System.out.println(map);
+               
+               }
+            
+            }
+         
+         }
+      
+         final List<WriteValuesWithMask> windows;
       
          FETCH_INPUT:
          {
          
-            final List<String> schedule =
+            final List<String> testLines =
+               """
+               mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X
+               mem[8] = 11
+               mem[7] = 101
+               mem[8] = 0
+               """
+                  .lines()
+                  .toList()
+                  ;
+         
+            final List<String> rawInput =
                this
                   .fetchLines("day14.txt")
                   .toList()
                   ;
          
+            final List<Value> values =
+               rawInput
+               // testLines
+                  .stream()
+                  .map(Value::parseLine)
+                  .toList()
+                  ;
+         
+            windows =
+               values
+                  .stream()
+                  .gather(windowBy(WriteValue.class::isInstance))
+                  .map(WriteValuesWithMask::parse)
+                  .filter(Optional::isPresent)
+                  .map(Optional::orElseThrow)
+                  .toList()
+                  ;
+         
          }
+      
+         final Map<BigInteger, BigInteger> finalValues = new HashMap<>();
+      
+         windows.forEach(eachWindow -> eachWindow.writeValuesTo(finalValues));
+      
+         System.out.println(finalValues);
+      
+         final BigInteger finalAnswer =
+            finalValues
+               .values()
+               .stream()
+               .reduce(BigInteger::add)
+               .orElseThrow()
+               ;
+      
+         System.out.println(finalAnswer);
       
       }
    
       void part2()
       {
       
+         record WriteValuesWithMask(MaskValue mask, List<WriteValue> writeValues)
+         {
+         
+            WriteValuesWithMask
+            {
+            
+               Objects.requireNonNull(mask);
+               Objects.requireNonNull(writeValues);
+            
+               if (writeValues.stream().anyMatch(Objects::isNull))
+               {
+               
+                  throw new IllegalArgumentException("writeValues cannot contain nulls! writeValues = " + writeValues);
+               
+               }
+            
+            }
+         
+            public static Optional<WriteValuesWithMask> parse(final List<Value> values)
+            {
+            
+               Objects.requireNonNull(values);
+            
+               if (values.isEmpty())
+               {
+               
+                  return Optional.empty();
+               
+               }
+            
+               if (!(values.getFirst() instanceof final MaskValue maskValue))
+               {
+               
+                  throw new IllegalArgumentException("First element must be a MaskValue! values = " + values);
+               
+               }
+            
+               final List<Value> writeValues = values.subList(1, values.size());
+            
+               if (!writeValues.stream().allMatch(WriteValue.class::isInstance))
+               {
+               
+                  throw new IllegalArgumentException("writeValues can only contain WriteValue! writeValues = " + writeValues);
+               
+               }
+            
+               return Optional.of(new WriteValuesWithMask(maskValue, writeValues.stream().map(WriteValue.class::cast).toList()));
+            
+            }
+         
+            public void writeValuesTo(final Map<BigInteger, BigInteger> map)
+            {
+            
+               Objects.requireNonNull(map);
+            
+               System.out.println(this);
+            
+               for (final WriteValue eachValue : this.writeValues)
+               {
+               
+                  BigInteger constructedAddress = eachValue.index();
+               
+                  for (int i = 0; i < NUMBER_OF_BITS; i++)
+                  {
+                  
+                     System.out.print(constructedAddress + " --> ");
+                  
+                     final var maskBlah = this.mask.mask().reversed().get(i);
+                  
+                     System.out.print(maskBlah + " --> " + i + " --> ");
+                  
+                     constructedAddress =
+                        switch (maskBlah)
+                        {
+                        
+                           case  ONE   -> constructedAddress.setBit(i);
+                           case  ZERO  -> constructedAddress.clearBit(i);
+                           case  X     -> constructedAddress;
+                        
+                        }
+                        ;
+                  
+                     System.out.println(constructedAddress);
+                  
+                  }
+               
+                  map.put(eachValue.index(), constructedAddress);
+               
+                  System.out.println(map);
+               
+               }
+            
+            }
+         
+         }
       
+         final List<WriteValuesWithMask> windows;
+      
+         FETCH_INPUT:
+         {
+         
+            final List<String> testLines =
+               """
+               mask = 000000000000000000000000000000X1001X
+               mem[42] = 100
+               mask = 00000000000000000000000000000000X0XX
+               mem[26] = 1
+               """
+                  .lines()
+                  .toList()
+                  ;
+         
+            final List<String> rawInput =
+               this
+                  .fetchLines("day14.txt")
+                  .toList()
+                  ;
+         
+            final List<Value> values =
+               // rawInput
+               testLines
+                  .stream()
+                  .map(Value::parseLine)
+                  .toList()
+                  ;
+         
+            windows =
+               values
+                  .stream()
+                  .gather(windowBy(WriteValue.class::isInstance))
+                  .map(WriteValuesWithMask::parse)
+                  .filter(Optional::isPresent)
+                  .map(Optional::orElseThrow)
+                  .toList()
+                  ;
+         
+         }
+      
+         final Map<BigInteger, BigInteger> finalValues = new HashMap<>();
+      
+         windows.forEach(eachWindow -> eachWindow.writeValuesTo(finalValues));
+      
+         System.out.println(finalValues);
+      
+         final BigInteger finalAnswer =
+            finalValues
+               .values()
+               .stream()
+               .reduce(BigInteger::add)
+               .orElseThrow()
+               ;
+      
+         System.out.println(finalAnswer);
       
       }
    
@@ -1353,6 +1693,35 @@ sealed abstract class AOC_2020
       
       }
    
+   }
+
+   <TR> Gatherer<TR, ?, List<TR>> windowBy(Predicate<TR> includeInCurrentWindow) {
+      class State {
+         ArrayList<TR> window;
+      
+         boolean integrate(TR element, Gatherer.Downstream<? super List<TR>> downstream) {
+            if (window != null && !includeInCurrentWindow.test(element)) {
+               var result = Collections.unmodifiableList(window);
+               window = null;
+               if (!downstream.push(result))
+                  return false;
+            }
+         
+            if (window == null)
+               window = new ArrayList<>();
+         
+            return window.add(element);
+         }
+      
+         void finish(Gatherer.Downstream<? super List<TR>> downstream) {
+            if (window != null) {
+               var result = Collections.unmodifiableList(window);
+               window = null;
+               downstream.push(result);
+            }
+         }
+      }
+      return Gatherer.<TR, State, List<TR>>ofSequential(State::new, State::integrate, State::finish);
    }
 
 }
