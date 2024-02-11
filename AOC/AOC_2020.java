@@ -570,9 +570,9 @@ sealed abstract class AOC_2020
                         switch (maskBlah)
                         {
                         
+                           case  ZERO  -> constructedAddress;
                            case  ONE   -> constructedAddress.setBit(i);
-                           case  ZERO  -> constructedAddress.clearBit(i);
-                           case  X     -> constructedAddress;
+                           case  X     -> throw new UnsupportedOperationException("unfinished");
                         
                         }
                         ;
