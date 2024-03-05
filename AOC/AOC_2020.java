@@ -425,6 +425,13 @@ sealed abstract class AOC_2020
                   map.put(eachValue.index(), constructedValue);
                
                   System.out.println(map);
+                  
+                     new Object()
+                     {
+                     
+                        public void blah(){}
+                     
+                     };
                
                }
             
