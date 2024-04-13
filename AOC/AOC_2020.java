@@ -110,17 +110,10 @@ sealed abstract class AOC_2020
    
    }
 
-   /**
-    *
-    * MAIN.
-    *
-    * @param args ignore
-    *
-    */
    public static void main(String[] args)
    {
    
-      new Day14().part1();
+      new Day1().part1();
    
    }
 
@@ -425,7 +418,7 @@ sealed abstract class AOC_2020
                   map.put(eachValue.index(), constructedValue);
                
                   System.out.println(map);
-                  
+               
                      new Object()
                      {
                      
@@ -1699,6 +1692,67 @@ sealed abstract class AOC_2020
          System.out.println(answer);
       
       }
+   
+   }
+
+   private static final class Day1 extends AOC_2020
+   {
+   
+      void part1()
+      {
+      
+         assert 1 == 0 : "WHAT";
+      
+         final List<Integer> listOfNumbers =
+            this.
+               fetchLines("day1.txt")
+                  .map(Integer::parseInt)
+                  .toList()
+                  ;
+      
+         final int length = listOfNumbers.size();
+         
+         final long result = 123;
+         
+         record Pair(Integer first, Integer second)
+         {
+         
+            Pair map(final List<Integer> listOfNumbers)
+            {
+            
+               final int firstValue = listOfNumbers.get(first);
+               final int secondValue = listOfNumbers.get(second);
+               
+               return new Pair(firstValue, secondValue);
+            
+            }
+         
+         }
+         
+         final var intermediate =
+            IntStream
+               .range(0, length)
+               .boxed()
+               .flatMap
+               (
+                  firstIndex ->
+                     IntStream
+                        .range(firstIndex, length)
+                        .mapToObj(secondIndex -> new Pair(firstIndex, secondIndex))
+               )
+               .filter(indexPair -> !indexPair.first().equals(indexPair.second()))
+               .map(indexPair -> indexPair.map(listOfNumbers))
+               .filter(valuePair -> 2020 == (valuePair.first() + valuePair.second()))
+               .limit(3)
+               .toList()
+               ;
+      
+         System.out.println(intermediate);
+      
+      }
+   
+      void part2()
+      {}
    
    }
 
