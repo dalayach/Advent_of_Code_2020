@@ -113,7 +113,7 @@ sealed abstract class AOC_2020
    public static void main(String[] args)
    {
    
-      new Day1().part1();
+      new Day14().part2();
    
    }
 
@@ -439,7 +439,7 @@ sealed abstract class AOC_2020
          
             final List<String> testLines =
                """
-               mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X
+               mask = 000000000000000000000000000000X1001X
                mem[8] = 11
                mem[7] = 101
                mem[8] = 0
@@ -618,6 +618,7 @@ sealed abstract class AOC_2020
                testLines
                   .stream()
                   .map(Value::parseLine)
+                  .map(eachValue -> eachValue instanceof MaskValue mv ? new MaskValue(mv.mask().reversed()) : eachValue)
                   .toList()
                   ;
          
@@ -635,19 +636,40 @@ sealed abstract class AOC_2020
       
          final Map<BigInteger, BigInteger> finalValues = new HashMap<>();
       
-         windows.forEach(eachWindow -> eachWindow.writeValuesTo(finalValues));
-      
-         System.out.println(finalValues);
-      
-         final BigInteger finalAnswer =
-            finalValues
-               .values()
-               .stream()
-               .reduce(BigInteger::add)
-               .orElseThrow()
-               ;
-      
-         System.out.println(finalAnswer);
+         windows
+            .stream()
+            .forEach
+            (
+               eachWindow ->
+               {
+               
+                  final MaskValue maskValue = eachWindow.mask();
+                  final List<WriteValue> writeValues = eachWindow.writeValues();
+                  
+                  writeValues
+                     .forEach
+                     (
+                        eachWriteValue ->
+                        {
+                        
+                           final BigInteger index = eachWriteValue.index();
+                           final BigInteger rawValue = eachWriteValue.rawValue();
+                        
+                           for (int i = 0; i < index.bitLength(); i++)
+                           {
+                           
+                              final MaskEntry maskBit = maskValue.mask().get(i);
+                           
+                           }
+                        
+                        }
+                     )
+                     ;
+               
+               }
+            )
+            ;
+         
       
       }
    
@@ -1711,9 +1733,9 @@ sealed abstract class AOC_2020
                   ;
       
          final int length = listOfNumbers.size();
-         
+      
          final long result = 123;
-         
+      
          record Pair(Integer first, Integer second)
          {
          
@@ -1722,13 +1744,13 @@ sealed abstract class AOC_2020
             
                final int firstValue = listOfNumbers.get(first);
                final int secondValue = listOfNumbers.get(second);
-               
+            
                return new Pair(firstValue, secondValue);
             
             }
          
          }
-         
+      
          final var intermediate =
             IntStream
                .range(0, length)
